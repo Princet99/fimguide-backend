@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js",  
-    "dev": "nodemon app.js", 
-    "build": "echo 'No build step for backend'", 
-    "deploy": "npm run build && npm run start" 
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "build": "echo 'No build step for backend'",
+    "deploy": "npm run build && npm run start"
   },
   "keywords": [],
   "author": "",
