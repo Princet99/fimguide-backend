@@ -24,7 +24,7 @@ const recentPaymentsQuery = `
       payment p ON s.id = p.schedule_id
   WHERE 
         s.loan_no = ? AND
-        s.schedule_date <= ?
+        p.payment_date <= ?
   ORDER BY 
       p.payment_date DESC;
 `;

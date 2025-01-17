@@ -1,3 +1,4 @@
+// General loan details such as loan number , loan amount , loan interest rate , loan status and score
 const loansQuery = `
   SELECT
       l.loan_no as loan_no,
