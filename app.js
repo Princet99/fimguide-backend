@@ -29,13 +29,26 @@ const app = express();
 const PORT = process.env.PORT;
 
 // app.use(sessionMiddleware);
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://fimguide-frontend.vercel.app"
+];
+
 app.use(
   cors({
-    origin: "http://localhost:3000", // Adjust this based on your frontend's URL
-    methods: ["GET", "POST","PUT"],
-    credentials: true, // Allow credentials (cookies, session headers) to be sent
+    origin: function(origin, callback) {
+      if (!origin) return callback(null, true); // allow requests like curl/postman with no origin
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    methods: ["GET", "POST", "PUT"],
+    credentials: true,
   })
 );
+
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
