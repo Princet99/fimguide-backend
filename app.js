@@ -29,15 +29,23 @@ const app = express();
 const PORT = process.env.PORT;
 
 // app.use(sessionMiddleware);
-const allowedOrigins = ['http://localhost:3000']; // This array needs modification
+const allowedOrigins = [
+  'https://fimguide-frontend.vercel.app', // Your deployed frontend
+  'http://localhost:3000',               // Your frontend during local development
+  'http://localhost:3030'                // If your frontend accesses the backend via localhost:3030 during local dev
+];
+
 app.use(cors({
   origin: function (origin, callback) {
+    // allow requests with no origin (like mobile apps or curl requests)
+    // or if the origin is in our allowed list
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
     }
-  }
+  },
+  credentials: true // Important if you're sending cookies or authorization headers
 }));
 
 app.use(express.json());
