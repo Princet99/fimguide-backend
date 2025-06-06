@@ -31,7 +31,7 @@ const PORT = process.env.PORT;
 // app.use(sessionMiddleware);
 app.use(
   cors({
-    origin: "http://localhost:3000", // Adjust this based on your frontend's URL
+    origin: "https://fimguide-frontend.vercel.app", // Adjust this based on your frontend's URL
     methods: ["GET", "POST","PUT"],
     credentials: true, // Allow credentials (cookies, session headers) to be sent
   })
