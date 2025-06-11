@@ -9,12 +9,10 @@ left join payment on payment.pm_sc_id = schedule.sc_id
 WHERE 
     sc_ln_no = ?
     AND sc_active = 'Y'
-    AND sc_payor = 2
-    AND sc_date > ?
-    AND sc_due > 0
+    AND sc_payor = 1 -- 1 is borrower 2 is lender
+    order by sc_date asc
     limit 1;
 `;
-
 const loancapitalQuery = `
 SELECT 
     sc_ln_no AS loan_no,
