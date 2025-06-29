@@ -29,13 +29,22 @@ const app = express();
 const PORT = process.env.PORT;
 
 // app.use(sessionMiddleware);
+const allowedOrigins = ["https://fimguide.com", "https://www.fimguide.com"];
+
 app.use(
   cors({
-    origin: "https://fimguide.com/", // Adjust this based on your frontend's URL
-    methods: ["GET", "POST","PUT"],
-    credentials: true, // Allow credentials (cookies, session headers) to be sent
+    origin: (origin, callback) => {
+      if (allowedOrigins.includes(origin) || !origin) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    methods: ["GET", "POST", "PUT"],
+    credentials: true,
   })
 );
+
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
