@@ -13,6 +13,7 @@ WHERE
     order by sc_date asc
     limit 1;
 `;
+
 const loancapitalQuery = `
 SELECT 
     sc_ln_no AS loan_no,
@@ -28,7 +29,7 @@ LEFT JOIN payment p on sc_id  = p.pm_sc_id
 WHERE 
     sc_ln_no = ? -- Replace with loan number
     AND sc_active = 'Y'
-    AND sc_payor = 1;`;
+    AND sc_payor = 2;`;
 
 const loanStateQuery = `
 SELECT 
@@ -41,15 +42,15 @@ SELECT
 FROM 
     schedule
 WHERE 
-    sc_ln_no = 'FA0002' -- Replace with loan number
+    sc_ln_no = ? -- Replace with loan number
     AND sc_active = 'Y'
-    AND sc_payor = 2
-    AND sc_date < '2025-03-06'
+    AND sc_payor = 1
+    AND sc_date < curdate()
 ORDER BY
     sc_date DESC;
 `;
 
-const currentbalanceQUery = `SELECT 
+const currentbalanceQuery = `SELECT 
     pm_ln_no AS loan_no,
     DATE_format(sc_date, '%m/%d/%Y') AS payment_date,
 	pm_balance as balance
@@ -59,7 +60,7 @@ FROM
 	schedule s ON payment.pm_sc_id = s.sc_id
 WHERE 
     pm_ln_no = ? -- Replace with loan number
-    AND pm_payor = 2
+    AND pm_payor = 1
     AND pm_date < ?
 ORDER BY 
     sc_date DESC
@@ -76,7 +77,7 @@ AND ss.ss_value = 'Lender';`;
 module.exports = {
   comingUpQuery,
   loanStateQuery,
-  currentbalanceQUery,
+  currentbalanceQuery,
   loanstateinfoQuery,
   loancapitalQuery,
 };
