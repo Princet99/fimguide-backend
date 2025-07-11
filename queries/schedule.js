@@ -50,7 +50,7 @@ ORDER BY
     sc_date DESC;
 `;
 
-const currentbalanceQuery = `SELECT 
+const currentbalanceQUery = `SELECT 
     pm_ln_no AS loan_no,
     DATE_format(sc_date, '%m/%d/%Y') AS payment_date,
 	pm_balance as balance
@@ -77,7 +77,7 @@ AND ss.ss_value = 'Lender';`;
 module.exports = {
   comingUpQuery,
   loanStateQuery,
-  currentbalanceQuery,
+  currentbalanceQUery,
   loanstateinfoQuery,
   loancapitalQuery,
 };
