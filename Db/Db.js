@@ -1,6 +1,4 @@
 const mysql = require("mysql2");
-const dotenv = require("dotenv");
-dotenv.config();
 
 const pool = mysql.createPool({
   host: process.env.HOST,
@@ -8,7 +6,11 @@ const pool = mysql.createPool({
   password: process.env.PASSWORD,
   database: process.env.DATABASE,
   port: 13879,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
 });
+
 
 console.log("database is connected")
 
