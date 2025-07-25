@@ -10,7 +10,7 @@ WHERE
     sc_ln_no = ?
     AND sc_active = 'Y'
     AND sc_payor = 1 -- 1 is borrower 2 is lender
-    order by sc_date asc
+    And sc_date > now()
     limit 1;
 `;
 
