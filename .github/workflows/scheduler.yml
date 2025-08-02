@@ -1,0 +1,16 @@
+name: Trigger Daily Reminder Job ⏰
+
+on:
+  schedule:
+    # Runs at 08:00 UTC every day.
+    # Use a cron calculator to find your desired schedule.
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+    # Allows you to run this workflow manually from the Actions tab
+
+jobs:
+  trigger_job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call the Render API endpoint
+        run: curl -X GET ${{ secrets.RENDER_URL }}
