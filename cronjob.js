@@ -1,4 +1,4 @@
-// D:\FIM\FIM_LOAN\Backend\cronjob_s.js
+// D:\FIM\FIM_LOAN\Backend\cronjob.js
 require("dotenv").config();
 const cron = require("node-cron");
 const { runReminderJob } = require("./cron/reminderJob"); // Make sure this path is correct
