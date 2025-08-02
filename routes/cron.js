@@ -5,7 +5,6 @@ const { runReminderJob } = require("../cron//reminderJob");
 router.get("/", async (req, res) => {
   if (req.query.secret !== process.env.CRON_SECRET) {
     console.warn("Forbidden!: Invalid secret token to cron endpoint");
-    console.log(req.query.secret)
     // Use 403 Forbidden  or 401 unauthroized status
     return res.status(403).json({ message: "Invalid or missing secret token" });
   }
