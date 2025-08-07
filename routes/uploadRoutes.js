@@ -43,13 +43,21 @@ router.get("/:id", async (req, res, next) => {
 // Use the Multer middleware to handle the file upload
 router.post("/upload", upload.single("image"), async function (req, res) {
   // Multer places non-file fields in req.body
-  const { luid, payment_date, amount, payer_role, comments } = req.body;
+  const { luid, payment_date, amount, paymentMethod, payer_role, comments } =
+    req.body;
 
   // Multer places file information in req.file
   const file = req.file;
 
   // Basic server-side validation
-  if (!luid || !payment_date || !amount || !payer_role || !file) {
+  if (
+    !luid ||
+    !payment_date ||
+    !amount ||
+    !payer_role ||
+    !file ||
+    !paymentMethod
+  ) {
     // Clean up the temporary file if it exists before sending error response
     if (file && file.path) {
       fs.unlink(file.path, (err) => {
@@ -95,8 +103,8 @@ router.post("/upload", upload.single("image"), async function (req, res) {
     // --- Insert data into PaymentVerification SQL table ---
     // Use the imported 'db' connection pool/object to execute the query
     const insertQuery = `
-        INSERT INTO PaymentVerification (luid, payment_date, receipt_url, amount, payer_role, comment)
-        VALUES (?, ?, ?, ?, ?, ?);
+        INSERT INTO PaymentVerification (luid, payment_date, receipt_url, amount, payment_method, payer_role, comment)
+        VALUES (?, ?, ?, ?, ?, ?, ?);
     `;
 
     // Execute the insert query using the existing database connection
@@ -105,6 +113,7 @@ router.post("/upload", upload.single("image"), async function (req, res) {
       payment_date,
       receiptUrl,
       parsedAmount,
+      paymentMethod,
       payer_role,
       comments,
     ]); // Use parsedAmount

@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { reminderJob } = require("../cron//reminderJob");
+const { runReminderJob } = require("../cron//reminderJob");
 
 router.get("/", async (req, res) => {
   if (req.query.secret !== process.env.CRON_SECRET) {
@@ -14,7 +14,7 @@ router.get("/", async (req, res) => {
     console.log("console job trigger succesfully");
 
     // Scheduler Logic here
-    await reminderJob();
+    await runReminderJob();
 
     res.status(200).json({ message: "cron job executed sucessfully" });
   } catch (error) {

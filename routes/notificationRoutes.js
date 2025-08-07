@@ -2,7 +2,7 @@
 
 const express = require("express");
 const router = express.Router();
-const { sendPaymentConfirmationEmail } = require("../services/paymentService"); // We'll create this mock service below
+const { sendPaymentConfirmationEmail } = require("../services/paymentServiceAdmin"); // We'll create this mock service below
 
 /**
  * @route   POST /api/notify/payment-confirmation

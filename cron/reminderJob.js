@@ -1,7 +1,7 @@
 // cron/reminderJob.js
 require("dotenv").config();
 const pool = require("../Db/Db"); // Adjust path to your DB connection pool
-const { sendReminderEmail } = require("../services/emailService"); // Adjust path to your email service
+const { sendReminderEmail } = require("../services/paymentReminderB"); // Adjust path to your email service
 
 // --- Main Cron Job Function ---
 // This function is the entry point for the cron task.
