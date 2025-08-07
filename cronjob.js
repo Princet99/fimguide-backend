@@ -24,7 +24,7 @@ async function startScheduler() {
   // --- CRON JOB SCHEDULER ---
   // This schedule runs the job every minute for easy testing.
   // Once you confirm it works, change it to your desired schedule (e.g., '0 8 * * *' for 8 AM).
-  cron.schedule("* 24 * * *", () => {
+  cron.schedule("* * * * *", () => {
     console.log(
       `\n[${new Date().toISOString()}] Triggering scheduled reminder job...`
     );

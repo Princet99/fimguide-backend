@@ -1,5 +1,5 @@
 // reminderController.js
-const emailService = require("../services/emailService");
+const emailService = require("../services/paymentReminderB");
 const reminderModel = require("../model/reminderModel"); // Adjust path as needed
 
 /**
@@ -47,7 +47,7 @@ async function createNotificationRule(req, res) {
       isEnabled,
       intervalDays
     );
-
+    console.log("notifications rule is this one");
     if (result.success) {
       res.status(201).json({
         message: "Notification rule created successfully",
@@ -292,7 +292,7 @@ async function saveNotificationSettings(req, res) {
       receiveNotifications,
       intervalDays
     );
-
+    console.log("notification pinged here", sc_ln_no);
     if (result.success) {
       res.status(200).json({
         message: result.message,
@@ -404,7 +404,7 @@ async function getNotificationSettingsByUserId(req, res) {
 async function getNotificationRuleByUserId(req, res) {
   try {
     // Get the userId from the request parameters (e.g., /api/notification-rules/123)
-    const { id : userId } = req.params;
+    const { id: userId } = req.params;
 
     if (!userId) {
       return res.status(400).json({ message: "User ID is required." });
@@ -415,7 +415,9 @@ async function getNotificationRuleByUserId(req, res) {
 
     if (!rule) {
       // It's okay if a user doesn't have a rule yet.
-      return res.status(404).json({ message: "No notification rule found for this user." });
+      return res
+        .status(404)
+        .json({ message: "No notification rule found for this user." });
     }
 
     // Send the found rule back as JSON
