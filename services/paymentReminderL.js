@@ -18,7 +18,7 @@ const transporter = nodemailer.createTransport({
 });
 
 // Function to send a detailed reminder email
-async function sendReminderEmail(
+async function sendLenderReminderEmail(
   toEmail,
   loanUserName,
   due_SP,
@@ -171,5 +171,5 @@ async function sendReminderEmail(
 }
 
 module.exports = {
-  sendReminderEmail,
+  sendLenderReminderEmail,
 };

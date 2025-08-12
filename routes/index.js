@@ -1,11 +1,13 @@
 // routes/index.js
 const authRoutes = require("./authRoutes");
 const loanRoutes = require("./loanRoutes");
-const uploadRoutes = require("./uploadRoutes"); // Assuming you've moved/renamed it
+const paymentRoutes = require("./paymentRoutes"); // Assuming you've moved/renamed it
 const reminderRoutes = require("./reminderRoutes"); // Your existing file
 const userRoutes = require("./userRoutes"); // Your existing file
 const notificationRoutes = require("./notificationRoutes");
 const cron = require("./cron");
+// Error Handler import
+const errorHandler = require("../middleware/errorHandler");
 
 /**
  * Configures and applies all defined API routes to the Express application.
@@ -18,7 +20,7 @@ module.exports = (app) => {
   app.use("/", authRoutes); // Root path for auth-related checks
 
   // API routes for file uploads
-  app.use("/api/photo", uploadRoutes); // Specific path for photo uploads
+  app.use("/api/photo", paymentRoutes); // Specific path for photo uploads
 
   // API routes for user loans and detailed loan information
   app.use("/my-loans", loanRoutes); // Base path for loan-related routes
@@ -35,4 +37,7 @@ module.exports = (app) => {
 
   // Scheduler route for cron , remove if hosting service allows to you to do cron job
   app.use("/api/cron", cron);
+
+  // Error handler
+  app.use(errorHandler);
 };

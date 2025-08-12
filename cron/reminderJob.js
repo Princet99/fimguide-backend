@@ -1,7 +1,8 @@
 // cron/reminderJob.js
 require("dotenv").config();
-const pool = require("../Db/Db"); // Adjust path to your DB connection pool
-const { sendReminderEmail } = require("../services/paymentReminderB"); // Adjust path to your email service
+const pool = require("../Db/Db"); //  your DB connection pool
+const { sendReminderEmail } = require("../services/paymentReminderB");
+const { sendLenderReminderEmail } = require("../services/paymentReminderL");
 
 // --- Main Cron Job Function ---
 // This function is the entry point for the cron task.
@@ -40,19 +41,26 @@ async function runReminderJob() {
 async function processAndSendDueReminders(connection) {
   console.log("Step 1: Checking for due reminders to send...");
 
-  // This query gets all due notifications. It does NOT know the specific payment details yet.
+  // ✅ **IMPROVEMENT:** Get all required data in one query using the new nl_sc_id link.
   const [dueReminders] = await connection.execute(
-    `
-    SELECT
+    `SELECT
         n.nl_notification_id    AS notification_id,
-        nr.nr_ln_no             AS loan_no,
-        nr.nr_email             AS toEmail
+        nr.nr_email             AS toEmail,
+        s.sc_sp_no              AS due_SP,
+        s.sc_date               AS dueDate,
+        s.sc_due                AS due_amount,
+        lu.lu_nickname          AS loanNickname,
+        u.us_first_name         AS loanUserName,
+        lu.lu_role               AS recipientRole
     FROM
         notifications n
     JOIN notification_rules nr ON n.nl_rule_id = nr.nr_rule_id
+    JOIN schedule s ON n.nl_sc_id = s.sc_id
+    JOIN loanuser lu ON nr.nr_lu_id = lu.lu_id
+    JOIN user u ON lu.lu_id = u.us_id
     WHERE
         n.nl_status = 'PENDING'
-    AND n.nl_scheduled_send_time <= NOW()
+    AND n.nl_scheduled_send_time >= NOW()
     AND nr.nr_is_enabled = 1;
     `
   );
@@ -66,50 +74,34 @@ async function processAndSendDueReminders(connection) {
   const sentIds = [];
   const failedIds = [];
 
+  // The loop is now much simpler as we don't need a second query.
   for (const reminder of dueReminders) {
     try {
-      // For each due reminder, we must now find the CURRENT next unpaid due date for its loan.
-      // This is the main logical change from not using nl_sc_id.
-      const [paymentDetails] = await connection.execute(
-        `
-        SELECT
-            s.sc_sp_no      AS due_SP,
-            s.sc_date       AS dueDate,
-            s.sc_due        AS due_amount,
-            lu.lu_nickname  AS loanNickname,
-            u.us_first_name AS loanUserName
-        FROM schedule s
-        LEFT JOIN payment p ON s.sc_id = p.pm_sc_id
-        JOIN loanuser lu ON s.sc_ln_no = lu.lu_ln_no
-        JOIN user u ON lu.lu_id = u.us_id
-        WHERE s.sc_ln_no = ?
-          AND s.sc_active = 'Y'
-          AND p.pm_sc_id IS NULL
-        ORDER BY s.sc_date ASC
-        LIMIT 1;
-        `,
-        [reminder.loan_no]
-      );
-
-      if (paymentDetails.length === 0) {
-        console.log(
-          `Skipping notification ${reminder.notification_id} for loan ${reminder.loan_no} as no upcoming payment was found.`
+      if (reminder.recipientRole === "Borrower") {
+        await sendReminderEmail(
+          reminder.toEmail,
+          reminder.loanUserName,
+          reminder.due_SP,
+          reminder.loanNickname,
+          reminder.dueDate,
+          reminder.due_amount,
+          "Payment Reminder"
         );
-        continue;
+      } else if (reminder.recipientRole === "Lender") {
+        await sendLenderReminderEmail(
+          reminder.toEmail,
+          reminder.loanUserName,
+          reminder.due_SP,
+          reminder.loanNickname,
+          reminder.dueDate,
+          reminder.due_amount,
+          "Upcoming Payment Information"
+        );
+      } else {
+        console.warn(
+          `Skipping notification for unhandled role: ${reminder.recipientRole}`
+        );
       }
-
-      const details = paymentDetails[0];
-
-      // Call the email service function with the dynamically fetched data
-      await sendReminderEmail(
-        reminder.toEmail,
-        details.loanUserName,
-        details.due_SP,
-        details.loanNickname,
-        details.dueDate,
-        details.due_amount,
-        "Payment Reminder"
-      );
       sentIds.push(reminder.notification_id);
       console.log(
         `Successfully sent reminder for notification ID: ${reminder.notification_id}`
@@ -122,7 +114,7 @@ async function processAndSendDueReminders(connection) {
     }
   }
 
-  // Bulk update statuses for efficiency
+  // Bulk updates remain the same
   if (sentIds.length > 0) {
     await connection.query(
       "UPDATE notifications SET nl_status = 'SENT', nl_actual_send_time = NOW() WHERE nl_notification_id IN (?)",
@@ -162,8 +154,7 @@ async function scheduleNewReminders(connection) {
       LEFT JOIN payment ON payment.pm_sc_id = schedule.sc_id
       WHERE sc_ln_no = ?
         AND sc_active = 'Y'
-        AND sc_payor = 1
-        AND payment.pm_sc_id IS NULL -- Check for unpaid
+        AND payment.pm_sc_id IS NULL -- Unpaid check
       ORDER BY sc_date ASC
       LIMIT 1;
       `,
@@ -175,42 +166,49 @@ async function scheduleNewReminders(connection) {
     }
 
     const nextDueDate = dueRows[0];
+    const scheduleId = nextDueDate.sc_id;
 
+    // This gets ALL enabled rules for the loan (e.g., Borrower and Co-borrower)
     const [ruleRows] = await connection.execute(
-      `SELECT nr_rule_id FROM notification_rules WHERE nr_ln_no = ? AND nr_is_enabled = 1 LIMIT 1`,
+      `SELECT nr_rule_id FROM notification_rules WHERE nr_ln_no = ? AND nr_is_enabled = 1`,
       [loanNo]
     );
 
     if (ruleRows.length === 0) {
       continue;
     }
-    const ruleId = ruleRows[0].nr_rule_id;
 
-    // To prevent duplicates, check if a 'PENDING' notification already exists for this rule.
-    const [notificationRows] = await connection.execute(
-      `SELECT nl_notification_id FROM notifications WHERE nl_rule_id = ? AND nl_status = 'PENDING'`,
-      [ruleId]
-    );
+    // This loop now correctly handles all the logic.
+    // It creates one notification record for each person's rule.
+    for (const rule of ruleRows) {
+      const ruleId = rule.nr_rule_id;
 
-    if (notificationRows.length > 0) {
-      // A pending notification already exists for this loan's rule, so we skip creating another one.
-      continue;
-    }
+      // Check if a notification for this specific person and this payment already exists
+      const [notificationRows] = await connection.execute(
+        `SELECT nl_notification_id FROM notifications WHERE nl_sc_id = ? AND nl_rule_id = ?`,
+        [scheduleId, ruleId]
+      );
 
-    const dueDate = new Date(nextDueDate.sc_date);
-    const scheduledSendTime = new Date(dueDate.setDate(dueDate.getDate() - 7));
+      if (notificationRows.length > 0) {
+        continue; // Skip if we've already created this one
+      }
 
-    // The INSERT no longer contains nl_sc_id.
-    await connection.execute(
-      `
-      INSERT INTO notifications (nl_rule_id, nl_status, nl_scheduled_send_time)
-      VALUES (?, 'PENDING', ?)
-      `,
-      [ruleId, scheduledSendTime]
-    );
-    console.log(
-      `Scheduled a new reminder for loan ${loanNo} (rule_id: ${ruleId}) on ${scheduledSendTime.toISOString()}`
-    );
+      const dueDate = new Date(nextDueDate.sc_date);
+      const scheduledSendTime = new Date(
+        dueDate.setDate(dueDate.getDate() - 7)
+      );
+
+      await connection.execute(
+        `
+        INSERT INTO notifications (nl_rule_id, nl_sc_id, nl_status, nl_scheduled_send_time)
+        VALUES (?, ?, 'PENDING', ?)
+        `,
+        [ruleId, scheduleId, scheduledSendTime]
+      );
+      console.log(
+        `Scheduled a reminder for rule ${ruleId} on loan ${loanNo} (sc_id: ${scheduleId})`
+      );
+    } // The loop correctly handles everything. Nothing else is needed.
   }
 }
 
