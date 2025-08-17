@@ -51,7 +51,6 @@ const uploadPayment = async (req, res, next) => {
     !amount ||
     !paymentMethod ||
     !payer_role ||
-    !comments ||
     !file
   ) {
     cleanupTempFile(file?.path);
