@@ -29,7 +29,7 @@ const transporter = nodemailer.createTransport({
  */
 async function sendPaymentConfirmationEmail(details) {
   const { loanno, amount, paymentDate, comments, imageUrl } = details;
-  const recipient = "";
+  const recipient = "sheri@fimguide.com";
   // 2. Define the email options, including a formatted HTML body
   const mailOptions = {
     from: process.env.BREVO_FROM_EMAIL, // Use a sending address authorized by Brevo
