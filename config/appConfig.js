@@ -20,7 +20,7 @@ module.exports = {
   port: process.env.PORT || 5000,
 
   // CORS origins are parsed into an array, allowing multiple domains.
-  corsOrigins: getCorsOrigins(process.env.CORS_ORIGIN, ["https://www.fimguide.com"]),
+  corsOrigins: getCorsOrigins(process.env.CORS_ORIGIN, ["https://www.fimdreams.com"]),
 
   // Application environment mode.
   nodeEnv: process.env.NODE_ENV || "development",
